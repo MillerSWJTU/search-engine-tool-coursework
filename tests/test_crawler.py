@@ -223,6 +223,8 @@ class TestFetchPage:
         crawler = Crawler(delay=0)
         result = crawler.fetch_page("http://example.com/bad")
         assert result is None
+        # Should retry MAX_RETRIES times
+        assert mock_get.call_count == 3
 
     @patch("src.crawler.requests.get")
     def test_connection_error_returns_none(self, mock_get):
@@ -230,6 +232,7 @@ class TestFetchPage:
         crawler = Crawler(delay=0)
         result = crawler.fetch_page("http://example.com")
         assert result is None
+        assert mock_get.call_count == 3
 
     @patch("src.crawler.requests.get")
     def test_timeout_error_returns_none(self, mock_get):
@@ -237,6 +240,23 @@ class TestFetchPage:
         crawler = Crawler(delay=0)
         result = crawler.fetch_page("http://example.com")
         assert result is None
+        assert mock_get.call_count == 3
+
+    @patch("src.crawler.requests.get")
+    def test_retry_then_success(self, mock_get):
+        """Test that a retry after failure succeeds."""
+        mock_response = MagicMock()
+        mock_response.text = "<html>OK</html>"
+        mock_response.raise_for_status = MagicMock()
+        # Fail first, succeed second
+        mock_get.side_effect = [
+            requests.ConnectionError("fail"),
+            mock_response,
+        ]
+        crawler = Crawler(delay=0)
+        result = crawler.fetch_page("http://example.com")
+        assert result == "<html>OK</html>"
+        assert mock_get.call_count == 2
 
     @patch("src.crawler.requests.get")
     def test_last_request_time_updated_on_success(self, mock_get):
@@ -296,7 +316,7 @@ class TestCrawl:
         mock_fetch.return_value = html
         crawler = Crawler(base_url="http://example.com/", delay=0)
         crawler.crawl()
-        # Should only fetch once despite self-link
+        # Should only fetch once despite self-link (URL normalized)
         assert mock_fetch.call_count == 1
 
     @patch.object(Crawler, "fetch_page")

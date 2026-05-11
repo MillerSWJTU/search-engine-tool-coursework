@@ -8,10 +8,11 @@ word frequency and position information for each page.
 import json
 import os
 import re
+from typing import Optional
 
 
 # Default file path for saving/loading the index
-DEFAULT_INDEX_PATH = os.path.join(
+DEFAULT_INDEX_PATH: str = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "data",
     "index.json",
@@ -29,11 +30,11 @@ class Indexer:
         #       "url2": {"frequency": M, "positions": [3, 7]},
         #   }
         # }
-        self.index = {}
+        self.index: dict[str, dict[str, dict]] = {}
         # Total number of documents indexed
-        self.doc_count = 0
+        self.doc_count: int = 0
 
-    def tokenize(self, text):
+    def tokenize(self, text: str) -> list[str]:
         """Split text into lowercase word tokens.
 
         Only keeps alphabetic words, strips punctuation and numbers.
@@ -41,7 +42,7 @@ class Indexer:
         words = re.findall(r"[a-zA-Z]+", text)
         return [w.lower() for w in words]
 
-    def add_page(self, url, text):
+    def add_page(self, url: str, text: str) -> None:
         """Add a page's content to the inverted index.
 
         Args:
@@ -59,7 +60,7 @@ class Indexer:
             self.index[word][url]["frequency"] += 1
             self.index[word][url]["positions"].append(position)
 
-    def build_from_pages(self, pages):
+    def build_from_pages(self, pages: dict[str, str]) -> None:
         """Build the inverted index from a dict of {url: text}.
 
         Args:
@@ -72,7 +73,7 @@ class Indexer:
         print(f"Index built: {len(self.index)} unique words "
               f"from {self.doc_count} pages.")
 
-    def save(self, filepath=None):
+    def save(self, filepath: Optional[str] = None) -> None:
         """Save the inverted index to a JSON file."""
         if filepath is None:
             filepath = DEFAULT_INDEX_PATH
@@ -87,7 +88,7 @@ class Indexer:
             json.dump(data, f, ensure_ascii=False, indent=2)
         print(f"Index saved to {filepath}")
 
-    def load(self, filepath=None):
+    def load(self, filepath: Optional[str] = None) -> bool:
         """Load the inverted index from a JSON file."""
         if filepath is None:
             filepath = DEFAULT_INDEX_PATH
@@ -104,7 +105,7 @@ class Indexer:
               f"from {self.doc_count} pages.")
         return True
 
-    def get_word_info(self, word):
+    def get_word_info(self, word: str) -> Optional[dict[str, dict]]:
         """Get the inverted index entry for a specific word.
 
         Returns None if the word is not found.

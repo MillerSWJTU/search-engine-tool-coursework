@@ -4,14 +4,18 @@ Search Engine Logic
 Provides print and find functionality using the inverted index.
 """
 
+from typing import Optional
+
+from src.indexer import Indexer
+
 
 class SearchEngine:
     """Search engine that queries the inverted index."""
 
-    def __init__(self, indexer):
+    def __init__(self, indexer: Indexer):
         self.indexer = indexer
 
-    def print_word(self, word):
+    def print_word(self, word: str) -> None:
         """Print the inverted index entry for a given word."""
         word = word.lower().strip()
         if not word:
@@ -30,7 +34,7 @@ class SearchEngine:
             print(f"      Frequency: {stats['frequency']}")
             print(f"      Positions: {stats['positions']}")
 
-    def find(self, query):
+    def find(self, query: str) -> list[str]:
         """Find pages containing all words in the query.
 
         For multi-word queries, returns pages where ALL words appear
@@ -48,7 +52,7 @@ class SearchEngine:
             return []
 
         # Get page sets for each word
-        result_sets = []
+        result_sets: list[set[str]] = []
         for word in words:
             info = self.indexer.get_word_info(word)
             if info is None:
